@@ -1,12 +1,20 @@
 import './App.css';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import TodoForm from './TodoForm';
+import TodoList from './TodoList';
 function App() {
   const [state, setState] = useState({
-    todoItems: [{
-      id: 0, value: 'React', done: false, delete: false
-    }]
+    todoItems: []
   });
+  useEffect(() => {
+    axios.get('http://localhost:8000/items')
+      .then(function (res) {
+        setState({
+          todoItems: [...res.data]
+        })
+      })
+  }, [state]);
   function addtoDoItem(todoItemValue) {
     const newTodoItem = {
       id: state.todoItems.length,
@@ -14,14 +22,25 @@ function App() {
       done: false,
       delete: false
     }
-    setState({
-      todoItems: [...state.todoItems, newTodoItem]
+    axios.post('http://localhost:8000/items-add', {
+      todoItems: newTodoItem
+    })
+    .then(function (res) {
+      setState({
+        todoItems: [...res.data]
+      })
     })
   }
   function deleteToDoItem(item) {
-    item.delete = true;
-    setState({
-      todoItems: [...state.todoItems, item]
+    axios.delete('http://localhost:8000/items-delete', {
+      data: {
+        id: item.id
+      }
+    })
+    .then(function (res) {
+      setState({
+        todoItems: [...res.data]
+      })
     })
   }
 
@@ -30,19 +49,7 @@ function App() {
       <h1>My First React App - todolist</h1>
       <div>
         <TodoForm addtoDoItem={addtoDoItem}></TodoForm>
-        <ul>
-          {
-            state.todoItems.map((item) => {
-              if (item.delete) return '';
-              return (
-                <li key={item.id}>
-                  <label>{item.value}</label>
-                  <button onClick={() => deleteToDoItem(item)}>删除</button>
-                </li>
-              );
-            })
-          }
-        </ul>
+        <TodoList todoItems={state.todoItems} deleteToDoItem={deleteToDoItem}></TodoList>
       </div>
     </div>
   );
